@@ -6,50 +6,20 @@
     <title>Gallery - Jaden's Plane Gallery</title>
     <meta name="description" content="Browse our collection of aviation photography">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <link href="Style1forwebsite.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Preload critical resources -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preload" href="images/Gallery/b777-cockpit.jpg" as="image">
-    <link rel="preload" href="images/Gallery/runway.jpg" as="image">
-    <style>
-      /* Critical-path CSS for gallery loading state */
-      .lazy-load {
-        opacity: 0;
-        transition: opacity 0.3s;
-      }
-      .loaded {
-        opacity: 1;
-      }
-      /* Loading indicator for gallery items */
-      .gallery-item {
-        position: relative;
-      }
-      .gallery-item.loading::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 30px;
-        height: 30px;
-        margin: -15px 0 0 -15px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 1;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
+    <link rel="preload" href="images/Gallery/thumbs/b777-cockpit.jpg" as="image">
+    <link rel="preload" href="images/Gallery/thumbs/runway.jpg" as="image">
   </head>
   <body>
     <header>
       <div id="logo">
         <a href="index.html">
-          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">\
+          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">
         </a>
       </div>
       <nav>
@@ -64,80 +34,76 @@
     </header>
     
     <main>
+      <div class="gallery-filters" role="group" aria-label="Filter photos">
+        <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="filter-btn" data-filter="flight" aria-pressed="false">In flight</button>
+        <button type="button" class="filter-btn" data-filter="ground" aria-pressed="false">On the ground</button>
+        <button type="button" class="filter-btn" data-filter="inside" aria-pressed="false">Inside the plane</button>
+      </div>
+      <p class="filter-status" id="filter-status" aria-live="polite"></p>
       <div class="gallery-grid">
         <!-- First 4 images load immediately for faster initial render -->
-        <div class="gallery-item">
-          <img src="images/Gallery/b777-cockpit.jpg" alt="B777 cockpit">
+        <div class="gallery-item" data-category="inside">
+          <img src="images/Gallery/thumbs/b777-cockpit.jpg" data-full="images/Gallery/b777-cockpit.jpg" alt="B777 cockpit">
           <div class="image-caption">Boeing 777 Cockpit View</div>
         </div>
-        <div class="gallery-item">
-          <img src="images/Gallery/runway.jpg" alt="Plane landing">
+        <div class="gallery-item" data-category="flight">
+          <img src="images/Gallery/thumbs/runway.jpg" data-full="images/Gallery/runway.jpg" alt="Plane landing">
           <div class="image-caption">An Airbus landing</div>
         </div>
-        <div class="gallery-item">
-          <img src="images/Gallery/777-closeup.jpg" alt="B777 closeup">
-          <div class="image-caption">Boeing 777-9x</div>
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/777-closeup.jpg" data-full="images/Gallery/777-closeup.jpg" alt="B777 closeup">
+          <div class="image-caption">Boeing 777-9</div>
         </div>
-        <div class="gallery-item">
-          <img src="images/Gallery/a380-taxiing.jpg" alt="A380 taxiing">
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/a380-taxiing.jpg" data-full="images/Gallery/a380-taxiing.jpg" alt="A380 taxiing">
           <div class="image-caption">A380 Taxiing</div>
         </div>
         
-        <!-- Remaining images use data-src for lazy loading -->
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/b787-landing.jpg" alt="787 landing">
+        <!-- The rest use loading="lazy": the browser loads them as you scroll down -->
+        <div class="gallery-item" data-category="flight">
+          <img src="images/Gallery/thumbs/b787-landing.jpg" data-full="images/Gallery/b787-landing.jpg" alt="787 landing" loading="lazy">
           <div class="image-caption">Boeing 787 Landing</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/cabin-view.jpg" alt="Cabin overwing view">
+        <div class="gallery-item" data-category="inside">
+          <img src="images/Gallery/thumbs/cabin-view.jpg" data-full="images/Gallery/cabin-view.jpg" alt="Cabin overwing view" loading="lazy">
           <div class="image-caption">Airbus overwing view when boarding onto the plane</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/MD-5-Taking-off.jpg" alt="McDonnel Douglas 5 taking off">
+        <div class="gallery-item" data-category="flight">
+          <img src="images/Gallery/thumbs/MD-5-Taking-off.jpg" data-full="images/Gallery/MD-5-Taking-off.jpg" alt="McDonnell Douglas 5 taking off" loading="lazy">
           <div class="image-caption">A rare MD-5 takeoff!!</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/British-taking-off.jpg" alt="British Airways taking off">
+        <div class="gallery-item" data-category="flight">
+          <img src="images/Gallery/thumbs/British-taking-off.jpg" data-full="images/Gallery/British-taking-off.jpg" alt="British Airways taking off" loading="lazy">
           <div class="image-caption">British Airways departing</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/united-taxiing.jpg" alt="United Airlines taxiing">
-          <div class="image-caption">United making it's way to the runway</div>
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/united-taxiing.jpg" data-full="images/Gallery/united-taxiing.jpg" alt="United Airlines taxiing" loading="lazy">
+          <div class="image-caption">United making its way to the runway</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/air-france.jpg" alt="Air France">
+        <div class="gallery-item" data-category="flight">
+          <img src="images/Gallery/thumbs/air-france.jpg" data-full="images/Gallery/air-france.jpg" alt="Air France" loading="lazy">
           <div class="image-caption">Air France cruising over the ocean</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/taxiing-planes.jpg" alt="Planes taxiing">
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/taxiing-planes.jpg" data-full="images/Gallery/taxiing-planes.jpg" alt="Planes taxiing" loading="lazy">
           <div class="image-caption">Planes lined up for take off!</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/wing-view.jpg" alt="Wing view from within a plane">
+        <div class="gallery-item" data-category="inside">
+          <img src="images/Gallery/thumbs/wing-view.jpg" data-full="images/Gallery/wing-view.jpg" alt="Wing view from within a plane" loading="lazy">
           <div class="image-caption">Amazing view from within the plane of a golden sky</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/Planes-on-taxiway.jpg" alt="Planes taxiing">
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/Planes-on-taxiway.jpg" data-full="images/Gallery/Planes-on-taxiway.jpg" alt="Planes taxiing" loading="lazy">
           <div class="image-caption">Planes lined up for take off at a different airport!</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/boarding-gate.jpg" alt="View of a plane at the boarding gate">
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/boarding-gate.jpg" data-full="images/Gallery/boarding-gate.jpg" alt="View of a plane at the boarding gate" loading="lazy">
           <div class="image-caption">View of this gorgeous plane from within the boarding gate!</div>
         </div>
-        <div class="gallery-item loading">
-          <img class="lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="images/Gallery/quatar.jpg" alt="Quatar Airways taxiing">
-          <div class="image-caption">Quatar Airways on it's way back to Quatar</div>
+        <div class="gallery-item" data-category="ground">
+          <img src="images/Gallery/thumbs/quatar.jpg" data-full="images/Gallery/quatar.jpg" alt="Qatar Airways taxiing" loading="lazy">
+          <div class="image-caption">Qatar Airways on its way back to Qatar</div>
         </div>
       </div>
     </main>
@@ -147,15 +113,5 @@
     </footer>
     
     <script src="scripts.js"></script>
-    <script>
-      // Remove loading indicators when images load
-      document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.gallery-item.loading img').forEach(img => {
-          img.addEventListener('load', function() {
-            this.closest('.gallery-item').classList.remove('loading');
-          });
-        });
-      });
-    </script>
   </body>  
 </html>

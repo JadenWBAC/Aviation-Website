@@ -6,6 +6,8 @@
     <title>Aircraft - Jaden's Plane Gallery</title>
     <meta name="description" content="Explore our featured aircraft collection">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <link href="Style1forwebsite.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   </head>
@@ -13,7 +15,7 @@
     <header>
       <div id="logo">
       <a href="index.html">
-          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">\
+          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">
         </a>
       </div>
       <nav>
@@ -30,107 +32,9 @@
     <main>
       <section class="aircraft-showcase">
         <h2 class="section-title">Our Featured Fleet</h2>
-        <div class="aircraft-grid">
-          <!-- Aircraft Card 1 -->
-          <div class="aircraft-card">
-            <a href="https://aircraft.airbus.com/en/aircraft/a350/a350-900" class="aircraft-link" target="_blank" rel="noopener noreferrer">
-              <div class="card-image">
-                <img src="images/a350-900.png" alt="Airbus A350">
-                <div class="card-overlay">
-                  <span class="info-btn" aria-label="More info"><i class="fas fa-external-link-alt"></i></span>
-                </div>
-              </div>
-              <div class="card-content">
-                <h3>Airbus A350-900</h3>
-                <div class="specs-grid">
-                  <div class="spec-item">
-                    <span class="spec-label">Range</span>
-                    <span class="spec-value">8,000nm</span>
-                  </div>
-                  <div class="spec-item">
-                    <span class="spec-label">Engines</span>
-                    <span class="spec-value">Rolls-Royce Trent XWB</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          
-          <!-- Aircraft Card 2 -->
-          <div class="aircraft-card">
-            <a href="https://www.boeing.com/commercial/787/" class="aircraft-link" target="_blank" rel="noopener noreferrer">
-              <div class="card-image">
-                <img src="images/b787.jpg" alt="Boeing 787 Dreamliner" onerror="this.src='/api/placeholder/400/200'; this.alt='Boeing 787'">
-                <div class="card-overlay">
-                  <span class="info-btn" aria-label="More info"><i class="fas fa-external-link-alt"></i></span>
-                </div>
-              </div>
-              <div class="card-content">
-                <h3>Boeing 787 Dreamliner</h3>
-                <div class="specs-grid">
-                  <div class="spec-item">
-                    <span class="spec-label">Range</span>
-                    <span class="spec-value">7,635nm</span>
-                  </div>
-                  <div class="spec-item">
-                    <span class="spec-label">Engines</span>
-                    <span class="spec-value">GEnx / Trent 1000</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          
-          <!-- Aircraft Card 3 -->
-          <div class="aircraft-card">
-            <a href="https://www.boeing.com/commercial/777x/" class="aircraft-link" target="_blank" rel="noopener noreferrer">
-              <div class="card-image">
-                <img src="images/b777x.jpg" alt="Boeing 777X" onerror="this.src='/api/placeholder/400/200'; this.alt='Boeing 777X'">
-                <div class="card-overlay">
-                  <span class="info-btn" aria-label="More info"><i class="fas fa-external-link-alt"></i></span>
-                </div>
-              </div>
-              <div class="card-content">
-                <h3>Boeing 777X</h3>
-                <div class="specs-grid">
-                  <div class="spec-item">
-                    <span class="spec-label">Range</span>
-                    <span class="spec-value">8,730nm</span>
-                  </div>
-                  <div class="spec-item">
-                    <span class="spec-label">Engines</span>
-                    <span class="spec-value">GE9X</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-          
-          <!-- Aircraft Card 4 -->
-          <div class="aircraft-card">
-            <a href="https://aircraft.airbus.com/en/aircraft/a380" class="aircraft-link" target="_blank" rel="noopener noreferrer">
-              <div class="card-image">
-                <img src="images/a380.jpg" alt="Airbus A380" onerror="this.src='/api/placeholder/400/200'; this.alt='Airbus A380'">
-                <div class="card-overlay">
-                  <span class="info-btn" aria-label="More info"><i class="fas fa-external-link-alt"></i></span>
-                </div>
-              </div>
-              <div class="card-content">
-                <h3>Airbus A380</h3>
-                <div class="specs-grid">
-                  <div class="spec-item">
-                    <span class="spec-label">Range</span>
-                    <span class="spec-value">8,000nm</span>
-                  </div>
-                  <div class="spec-item">
-                    <span class="spec-label">Engines</span>
-                    <span class="spec-value">GP7200 / Trent 900</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <!-- scripts.js fills this grid from aircraft-data.js -->
+        <div class="aircraft-grid" id="aircraft-grid"></div>
+        <noscript><p class="noscript-note">Please turn on JavaScript to see the aircraft.</p></noscript>
       </section>
     </main>
     
@@ -138,6 +42,7 @@
       Created by Jaden
     </footer>
     
+    <script src="aircraft-data.js"></script>
     <script src="scripts.js"></script>
   </body>  
 </html>

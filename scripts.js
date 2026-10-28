@@ -20,7 +20,8 @@ function initializeComponents() {
       overlay: document.getElementById('video-overlay'),
       hero: document.querySelector('.hero-video')
     },
-    aircraftCards: document.querySelectorAll('.info-btn'),
+    aircraftGrid: document.getElementById('aircraft-grid'),
+    galleryFilters: document.querySelector('.gallery-filters'),
     contactForm: document.querySelector('.contact-form'),
     aboutPage: document.querySelector('.section-title'),
     navLinks: document.querySelectorAll('nav a')
@@ -29,14 +30,12 @@ function initializeComponents() {
   // Initialize only components that exist on the page
   if (components.hero) initializeHero(components.hero);
   if (components.gallery.length) initializeGallery(components.gallery);
+  if (components.galleryFilters) initializeGalleryFilters(components.galleryFilters);
   if (components.video.featured && components.video.overlay) initializeVideoOverlay(components.video);
-  if (components.aircraftCards.length) initializeAircraftCards(components.aircraftCards);
+  if (components.aircraftGrid) renderAircraftCards(components.aircraftGrid);
   if (components.contactForm) initializeContactForm(components.contactForm);
   if (components.aboutPage) initializeAboutPage(components.aboutPage);
   if (components.navLinks.length) initializeNavigation(components.navLinks);
-  
-  // Always initialize lazy loading for performance
-  lazyLoadImages();
 }
 
 /**
@@ -50,95 +49,189 @@ function initializeHero(heroContent) {
 }
 
 /**
- * Gallery Initialization with improved event delegation
+ * Gallery lightbox: click a photo to see it large.
+ *   - Esc closes it, the left/right arrow keys move between photos
+ *   - on a phone, swipe left/right
+ *   - photos hidden by a filter are skipped
  */
 function initializeGallery(galleryItems) {
-  // Use a single event listener on the parent container for better performance
-  const galleryContainer = galleryItems[0].parentElement;
-  let activeZoom = null;
-  
-  galleryContainer.addEventListener('click', function(e) {
-    // Find if a gallery item was clicked
-    const galleryItem = e.target.closest('.gallery-item');
-    if (!galleryItem || activeZoom) return;
-    
-    e.stopPropagation();
-    activeZoom = createZoomView(galleryItem, galleryItems);
+  const grid = galleryItems[0].parentElement;
+  let lightbox = null;   // the open viewer's elements, or null while it's closed
+  let currentIndex = 0;  // which of the VISIBLE photos is showing
+  let opener = null;     // the grid photo that opened the viewer (focus goes back there)
+
+  // Make every photo reachable with the keyboard, not just the mouse
+  galleryItems.forEach(item => {
+    item.tabIndex = 0;
+    item.setAttribute('role', 'button');
+    const caption = item.querySelector('.image-caption');
+    if (caption) item.setAttribute('aria-label', 'View larger: ' + caption.textContent.trim());
   });
-  
-  // Handle clicks on the document to close zoomed views
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('gallery-overlay') || 
-        e.target.classList.contains('zoom-close-btn')) {
-      removeZoomView(activeZoom, galleryItems);
-      activeZoom = null;
+
+  // The grid shows small thumbnails (images/Gallery/thumbs/...).
+  // If a thumbnail doesn't exist yet, fall back to the full-size photo so nothing ever looks broken.
+  function useFullPhotoIfThumbMissing(img) {
+    const swap = () => {
+      if (img.dataset.full && !img.dataset.usedFull) {
+        img.dataset.usedFull = 'yes';   // only ever swap once
+        img.src = img.dataset.full;
+      }
+    };
+    img.addEventListener('error', swap, { once: true });
+    if (img.complete && img.naturalWidth === 0) swap(); // it had already failed before this code ran
+  }
+  galleryItems.forEach(item => useFullPhotoIfThumbMissing(item.querySelector('img')));
+
+  // Photos not hidden by a filter
+  const visibleItems = () => Array.from(galleryItems).filter(item => !item.hidden);
+
+  grid.addEventListener('click', function(e) {
+    const item = e.target.closest('.gallery-item');
+    if (item && !lightbox) openLightbox(item);
+  });
+
+  grid.addEventListener('keydown', function(e) {
+    const item = e.target.closest('.gallery-item');
+    if (item && !lightbox && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault(); // stops the space bar from scrolling the page
+      openLightbox(item);
     }
   });
+
+  function makeButton(className, symbol, label) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = className;
+    btn.textContent = symbol;
+    btn.setAttribute('aria-label', label);
+    return btn;
+  }
+
+  function openLightbox(item) {
+    opener = item;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'gallery-overlay';
+
+    const container = document.createElement('div');
+    container.className = 'zoomed-container';
+    container.setAttribute('role', 'dialog');
+    container.setAttribute('aria-modal', 'true');
+    container.setAttribute('aria-label', 'Photo viewer');
+
+    const img = document.createElement('img');
+    const caption = document.createElement('div');
+    caption.className = 'image-caption';
+    const closeBtn = makeButton('zoom-close-btn', '×', 'Close');
+    const prevBtn = makeButton('lightbox-nav lightbox-prev', '‹', 'Previous photo');
+    const nextBtn = makeButton('lightbox-nav lightbox-next', '›', 'Next photo');
+
+    container.append(img, caption, closeBtn);
+    document.body.append(overlay, container, prevBtn, nextBtn);
+    document.body.style.overflow = 'hidden';
+
+    lightbox = { overlay, container, img, caption, prevBtn, nextBtn };
+    showPhoto(visibleItems().indexOf(item));
+
+    // Mouse / touch
+    overlay.addEventListener('click', closeLightbox);
+    closeBtn.addEventListener('click', closeLightbox);
+    prevBtn.addEventListener('click', () => showPhoto(currentIndex - 1));
+    nextBtn.addEventListener('click', () => showPhoto(currentIndex + 1));
+
+    // Keyboard (removed again in closeLightbox)
+    document.addEventListener('keydown', onKeydown);
+
+    // Swipe: finger moves left = next photo, right = previous
+    let touchStartX = null;
+    container.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+    container.addEventListener('touchend', e => {
+      if (touchStartX === null) return;
+      const distance = e.changedTouches[0].clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(distance) > 50) showPhoto(currentIndex + (distance < 0 ? 1 : -1));
+    }, { passive: true });
+
+    closeBtn.focus();
+  }
+
+  function showPhoto(index) {
+    const items = visibleItems();
+    currentIndex = (index + items.length) % items.length; // wraps around at both ends
+    const item = items[currentIndex];
+    const thumb = item.querySelector('img');
+    const caption = item.querySelector('.image-caption');
+
+    lightbox.img.alt = thumb.alt;
+
+    // Show the small thumbnail instantly, then swap in the full-size photo once it has downloaded
+    lightbox.img.src = thumb.currentSrc || thumb.src;
+    const full = thumb.dataset.full;
+    if (full && !(thumb.currentSrc || '').endsWith(full)) {
+      const shownIndex = currentIndex;
+      const bigPhoto = new Image();
+      bigPhoto.onload = () => {
+        // only swap if the viewer is still open and still on this photo
+        if (lightbox && currentIndex === shownIndex) lightbox.img.src = full;
+      };
+      bigPhoto.src = full;
+    }
+    lightbox.caption.textContent = caption ? caption.textContent : '';
+
+    // No arrows if there's only one photo to look at
+    lightbox.prevBtn.hidden = items.length < 2;
+    lightbox.nextBtn.hidden = items.length < 2;
+  }
+
+  function onKeydown(e) {
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowRight') showPhoto(currentIndex + 1);
+    else if (e.key === 'ArrowLeft') showPhoto(currentIndex - 1);
+  }
+
+  function closeLightbox() {
+    if (!lightbox) return;
+    [lightbox.overlay, lightbox.container, lightbox.prevBtn, lightbox.nextBtn].forEach(el => el.remove());
+    document.removeEventListener('keydown', onKeydown);
+    document.body.style.overflow = '';
+    lightbox = null;
+    if (opener) opener.focus();
+  }
 }
 
 /**
- * Create zoomed view of gallery image
+ * Gallery filter buttons (All / In flight / On the ground / Inside the plane).
+ * Every photo in gallery.html has data-category="flight", "ground" or "inside".
+ * Filtering just sets the photo's "hidden" attribute on or off.
  */
-function createZoomView(item, allItems) {
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'gallery-overlay';
-  
-  // Create zoomed container
-  const zoomedContainer = document.createElement('div');
-  zoomedContainer.className = 'zoomed-container';
-  
-  // Clone the image for zooming
-  const img = item.querySelector('img').cloneNode(true);
-  if (img.dataset.src) img.src = img.dataset.src;
-  
-  // Add caption if it exists
-  const caption = item.querySelector('.image-caption');
-  const captionClone = caption ? caption.cloneNode(true) : null;
-  if (captionClone) captionClone.style.opacity = '1';
-  
-  // Add close button
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'zoom-close-btn';
-  closeBtn.innerHTML = '&times;';
-  
-  // Assemble the zoomed view
-  zoomedContainer.appendChild(img);
-  if (captionClone) zoomedContainer.appendChild(captionClone);
-  zoomedContainer.appendChild(closeBtn);
-  
-  // Append to body
-  document.body.appendChild(overlay);
-  document.body.appendChild(zoomedContainer);
-  document.body.style.overflow = 'hidden';
-  
-  // Apply blur to all gallery items
-  allItems.forEach(item => {
-    item.style.filter = 'blur(5px)';
-    item.style.opacity = '0.7';
-    item.style.pointerEvents = 'none';
-  });
-  
-  return { overlay, zoomedContainer };
-}
+function initializeGalleryFilters(filterBar) {
+  const items = document.querySelectorAll('.gallery-item');
+  const buttons = filterBar.querySelectorAll('.filter-btn');
+  const status = document.getElementById('filter-status');
 
-/**
- * Remove zoomed view
- */
-function removeZoomView(zoomElements, galleryItems) {
-  if (!zoomElements) return;
-  
-  const { overlay, zoomedContainer } = zoomElements;
-  zoomedContainer.remove();
-  overlay.remove();
-  document.body.style.overflow = 'auto';
-  
-  // Restore gallery items
-  galleryItems.forEach(item => {
-    item.style.pointerEvents = 'auto';
-    item.style.filter = 'none';
-    item.style.opacity = '1';
+  function applyFilter(filter) {
+    let shown = 0;
+    items.forEach(item => {
+      const matches = filter === 'all' || item.dataset.category === filter;
+      item.hidden = !matches;
+      if (matches) shown++;
+    });
+    if (status) status.textContent = `Showing ${shown} of ${items.length} photos`;
+  }
+
+  filterBar.addEventListener('click', function(e) {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+
+    buttons.forEach(b => {
+      const isActive = (b === btn);
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', isActive);
+    });
+    applyFilter(btn.dataset.filter);
   });
+
+  applyFilter('all'); // sets the "Showing 15 of 15 photos" text at the start
 }
 
 /**
@@ -153,38 +246,81 @@ function initializeVideoOverlay(videoElements) {
     featured.addEventListener(event, function() {
       const isPlaying = event === 'play';
       overlay.style.opacity = isPlaying ? '0' : '1';
-      overlay.style.pointerEvents = isPlaying ? 'none' : 'auto';
     });
   });
   
-  // Handle hero video autoplay with better error handling
+  // Hero video autoplay: if the browser refuses (e.g. a phone in Low Power Mode),
+  // show ONE play button instead.
   if (hero) {
-    hero.play().catch(() => {
-      // Add play button for browsers that block autoplay
-      const playButton = document.createElement('button');
-      playButton.className = 'video-play-btn';
-      playButton.innerHTML = '<i class="fas fa-play"></i>';
-      playButton.addEventListener('click', () => hero.play());
-      hero.parentNode.appendChild(playButton);
-    });
+    const attempt = hero.play();
+    if (attempt !== undefined) {
+      attempt.catch(() => {
+        if (hero.parentNode.querySelector('.video-play-btn')) return; // already have one
+
+        const playButton = document.createElement('button');
+        playButton.type = 'button';
+        playButton.className = 'video-play-btn';
+        playButton.setAttribute('aria-label', 'Play background video');
+        playButton.innerHTML = '<i class="fas fa-play"></i><span>Play video</span>';
+        playButton.addEventListener('click', () => {
+          hero.play();
+          playButton.remove(); // job done, so the button goes away
+        });
+        hero.parentNode.appendChild(playButton);
+      });
+    }
   }
 }
 
 /**
- * Aircraft Card Interactions using event delegation
+ * Aircraft cards are built from the AIRCRAFT list in aircraft-data.js
+ * (one entry per plane), so adding a plane never means copy-pasting HTML.
  */
-function initializeAircraftCards(infoBtns) {
-  // Use event delegation for better performance
-  document.addEventListener('click', function(e) {
-    const infoBtn = e.target.closest('.info-btn');
-    if (!infoBtn) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const card = infoBtn.closest('.aircraft-card');
-    card.classList.toggle('expanded');
-  });
+function renderAircraftCards(grid) {
+  if (typeof AIRCRAFT === 'undefined' || !AIRCRAFT.length) {
+    grid.innerHTML = '<p>Sorry, the aircraft list could not be loaded.</p>';
+    return;
+  }
+  // For each plane in the list: build a card, then put it in the grid
+  AIRCRAFT.forEach(plane => grid.appendChild(createAircraftCard(plane)));
+}
+
+function createAircraftCard(plane) {
+  // One .spec-item for every entry in plane.specs, so a new spec needs no code change
+  const specsHTML = Object.entries(plane.specs).map(([label, value]) => `
+        <div class="spec-item">
+          <span class="spec-label">${label}</span>
+          <span class="spec-value">${value}</span>
+        </div>`).join('');
+
+  const card = document.createElement('div');
+  card.className = 'aircraft-card';
+
+  // innerHTML is fine here because this text is ours (aircraft-data.js).
+  // For text that visitors type in, use textContent instead.
+  card.innerHTML = `
+    <a href="${plane.link}" class="aircraft-link" target="_blank" rel="noopener noreferrer">
+      <div class="card-image">
+        <img src="${plane.image}" alt="${plane.alt}">
+        <div class="card-overlay">
+          <span class="info-btn" aria-hidden="true"><i class="fas fa-external-link-alt"></i></span>
+        </div>
+      </div>
+      <div class="card-content">
+        <h3>${plane.name}</h3>
+        <div class="specs-grid">${specsHTML}
+        </div>
+        <span class="visually-hidden">(opens the manufacturer's page in a new tab)</span>
+      </div>
+    </a>
+  `;
+
+  // If the photo is missing, swap in the local placeholder.
+  // { once: true } means this runs one time only, so it can never loop.
+  const img = card.querySelector('img');
+  img.addEventListener('error', () => { img.src = 'images/placeholder.svg'; }, { once: true });
+
+  return card;
 }
 
 /**
@@ -192,12 +328,35 @@ function initializeAircraftCards(infoBtns) {
  */
 function initializeContactForm(form) {
   // Form submission
-  form.addEventListener('submit', function(e) {
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    
-    if (validateForm(this)) {
-      showSuccessMessage(this);
-      this.reset();
+
+    // Stop here if any field is invalid
+    if (!validateForm(this)) return;
+
+    // Be honest: if the form isn't connected to Formspree yet, say so
+    // instead of pretending the message was sent.
+    if (this.action.includes('YOUR_FORM_ID')) {
+      showMessage(this, 'error', "The contact form isn't connected yet.");
+      return;
+    }
+
+    try {
+      // Send the form fields to Formspree and wait for the answer
+      const response = await fetch(this.action, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: { Accept: 'application/json' }
+      });
+
+      if (response.ok) {
+        showMessage(this, 'success', 'Message sent successfully!');
+        this.reset();
+      } else {
+        throw new Error('Server replied with status ' + response.status);
+      }
+    } catch (err) {
+      showMessage(this, 'error', 'Something went wrong. Please try again.');
     }
   });
   
@@ -292,101 +451,27 @@ function isValidEmail(email) {
 }
 
 /**
- * Display success message after form submission
+ * Show a message under the form.
+ * type is 'success' or 'error' (each has its own colours in the CSS).
  */
-function showSuccessMessage(form) {
-  // Check if success message already exists and remove it
-  const existingMsg = form.parentNode.querySelector('.success-message');
+function showMessage(form, type, text) {
+  // Remove an old message first so they don't pile up
+  const existingMsg = form.querySelector('.success-message, .error-message');
   if (existingMsg) existingMsg.remove();
-  
-  const successDiv = document.createElement('div');
-  successDiv.className = 'success-message';
-  successDiv.innerHTML = `
-    <i class="fas fa-check-circle"></i>
-    <p>Message sent successfully!</p>
+
+  const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+  const msgDiv = document.createElement('div');
+  msgDiv.className = type + '-message';
+  msgDiv.innerHTML = `
+    <i class="fas ${icon}"></i>
+    <p>${text}</p>
   `;
-  form.parentNode.insertBefore(successDiv, form.nextSibling);
-  
-  // Use built-in animation instead of setTimeout for better performance
-  successDiv.style.animation = 'fadeout 3s forwards';
-  successDiv.addEventListener('animationend', () => successDiv.remove());
-}
+  form.appendChild(msgDiv); // goes right under the Send button
 
-/**
- * Lazy Load Images with Intersection Observer
- * Enhanced to handle gallery items even without data-src attributes
- */
-function lazyLoadImages() {
-  // First, convert standard gallery images to use data-src if not already
-  // This helps with gallery.html where images are loaded directly
-  const galleryImages = document.querySelectorAll('.gallery-item img:not([data-src])');
-  if (galleryImages.length > 0) {
-    galleryImages.forEach(img => {
-      // Only process images that are not in the first visible batch (approx. first 4-6 images)
-      if (!isInInitialViewport(img)) {
-        // Store original src
-        img.dataset.src = img.src;
-        // Replace with a lightweight placeholder or blank
-        img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
-        // Add lazy-load class for styling
-        img.classList.add('lazy-load');
-      }
-    });
-  }
-
-  // Now handle all images with data-src attribute
-  const images = document.querySelectorAll('img[data-src]');
-  
-  if (images.length === 0) return;
-  
-  if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          
-          if (img.dataset.src) {
-            // Create an image object to preload
-            const tempImg = new Image();
-            tempImg.onload = () => {
-              img.src = img.dataset.src;
-              img.removeAttribute('data-src');
-              img.classList.add('loaded');
-              img.classList.remove('lazy-load');
-            };
-            tempImg.src = img.dataset.src;
-          }
-          
-          observer.unobserve(img);
-        }
-      });
-    }, {
-      rootMargin: '100px 0px', // Increased margin for earlier loading
-      threshold: 0.01
-    });
-    
-    images.forEach(img => imageObserver.observe(img));
-  } else {
-    // Fallback for browsers that don't support IntersectionObserver
-    images.forEach(img => {
-      if (img.dataset.src) {
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-        img.classList.add('loaded');
-        img.classList.remove('lazy-load');
-      }
-    });
-  }
-}
-
-/**
- * Helper to determine if an element is likely in the initial viewport
- */
-function isInInitialViewport(el) {
-  const rect = el.getBoundingClientRect();
-  const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-  // Consider elements in roughly the first viewport as initially visible
-  return rect.top < windowHeight * 1.2;
+  // The 'fadeout' animation now exists in the CSS file.
+  // When it finishes, remove the message from the page.
+  msgDiv.style.animation = 'fadeout 5s forwards';
+  msgDiv.addEventListener('animationend', () => msgDiv.remove());
 }
 
 /**

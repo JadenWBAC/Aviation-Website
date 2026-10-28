@@ -6,6 +6,15 @@
     <title>Jaden's Plane Gallery</title>
     <meta name="description" content="Aviation and aircraft gallery showcasing planes from around the world">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Link preview (WhatsApp, LinkedIn, ...).
+         TODO: once you know the full https:// address of the site, add this line too:
+         <meta property="og:image" content="https://YOUR-USERNAME.github.io/YOUR-REPO/images/video-thumbnail.jpg"> -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Jaden's Plane Gallery">
+    <meta property="og:description" content="Aviation photography and aircraft facts. Where engineering meets the sky.">
+    <noscript><style>.hero .hero-content { opacity: 1; transform: none; }</style></noscript>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <link href="Style1forwebsite.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Preconnect to CDN -->
@@ -13,45 +22,12 @@
     <!-- Preload critical assets -->
     <link rel="preload" href="images/logo.png" as="image">
     <link rel="preload" href="images/takeoff.mp4" as="video" type="video/mp4">
-    <style>
-      /* Critical CSS for fade-in animations */
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .hero-content {
-        opacity: 0;
-      }
-      .hero-content.fade-in {
-        animation: fadeIn 0.8s ease-out forwards;
-      }
-      .video-play-btn {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.6);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-        cursor: pointer;
-        z-index: 2;
-        transition: all 0.3s;
-      }
-      .video-play-btn:hover {
-        background: rgba(0,0,0,0.8);
-        transform: translate(-50%, -50%) scale(1.1);
-      }
-    </style>
   </head>
   <body>
     <header>
       <div id="logo">
         <a href="index.html">
-          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">\
+          <img src="images/logo.png" alt="Jaden's Plane Gallery" height="150" width="150">
         </a>
       </div>
       <nav>
@@ -79,6 +55,10 @@
         <div class="hero-content">
           <h1 class="hero-title">Jaden's Plane Gallery</h1>
           <p class="hero-subtitle">Where Engineering Meets the Sky</p>
+          <div class="hero-cta">
+            <a href="gallery.html" class="btn btn-primary">Browse the gallery</a>
+            <a href="aircraft.html" class="btn btn-secondary">Meet the aircraft</a>
+          </div>
         </div>
       </section>
     
@@ -109,26 +89,5 @@
     </footer>
     
     <script src="scripts.js"></script>
-    <script>
-      // Fallback for browsers that block autoplay
-      document.addEventListener('DOMContentLoaded', function() {
-        const heroVideo = document.querySelector('.hero-video');
-        if (heroVideo) {
-          // Check if video is paused after attempting to autoplay
-          setTimeout(() => {
-            if (heroVideo.paused) {
-              const playButton = document.createElement('button');
-              playButton.className = 'video-play-btn';
-              playButton.innerHTML = '<i class="fas fa-play"></i>';
-              playButton.addEventListener('click', () => {
-                heroVideo.play();
-                playButton.remove();
-              });
-              heroVideo.parentNode.appendChild(playButton);
-            }
-          }, 500);
-        }
-      });
-    </script>
   </body>  
 </html>

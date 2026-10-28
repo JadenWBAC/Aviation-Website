@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" role="img" aria-label="Photo coming soon">
+  <rect width="400" height="250" fill="#003366"/>
+  <!-- simple plane silhouette -->
+  <g fill="#e0f0ff" transform="translate(200 100) rotate(-30)">
+    <path d="M0 -40 L8 -10 L50 15 L50 25 L8 12 L5 35 L18 45 L18 52 L0 47 L-18 52 L-18 45 L-5 35 L-8 12 L-50 25 L-50 15 L-8 -10 Z"/>
+  </g>
+  <text x="200" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#e0f0ff">Photo coming soon</text>
+</svg>
