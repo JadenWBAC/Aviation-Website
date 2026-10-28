@@ -21,7 +21,6 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <!-- Preload critical assets -->
     <link rel="preload" href="images/logo.png" as="image">
-    <link rel="preload" href="images/takeoff.mp4" as="video" type="video/mp4">
   </head>
   <body>
     <header>
@@ -71,8 +70,8 @@
       <!-- Video Section -->
       <section class="video-section">
         <div class="video-container">
-          <!-- Added loading="lazy" to defer video loading -->
-          <video id="featured-video" class="featured-video" controls poster="images/video-thumbnail.jpg" preload="none" loading="lazy">
+          <!-- preload="none": the video only downloads when someone presses play -->
+          <video id="featured-video" class="featured-video" controls poster="images/video-thumbnail.jpg" preload="none">
             <source src="images/B777-landings.mp4" type="video/mp4">
             Your browser does not support the video tag.
           </video>

@@ -36,6 +36,9 @@ function initializeComponents() {
   if (components.contactForm) initializeContactForm(components.contactForm);
   if (components.aboutPage) initializeAboutPage(components.aboutPage);
   if (components.navLinks.length) initializeNavigation(components.navLinks);
+
+  // Swap in a placeholder for any missing photo marked with data-fallback
+  initializeImageFallbacks();
 }
 
 /**
@@ -341,6 +344,8 @@ function initializeContactForm(form) {
       return;
     }
 
+    const errorText = 'Something went wrong. Please try again.';
+
     try {
       // Send the form fields to Formspree and wait for the answer
       const response = await fetch(this.action, {
@@ -353,10 +358,10 @@ function initializeContactForm(form) {
         showMessage(this, 'success', 'Message sent successfully!');
         this.reset();
       } else {
-        throw new Error('Server replied with status ' + response.status);
+        showMessage(this, 'error', errorText);   // the server answered, but said no
       }
     } catch (err) {
-      showMessage(this, 'error', 'Something went wrong. Please try again.');
+      showMessage(this, 'error', errorText);     // no internet, or the request was blocked
     }
   });
   
@@ -446,7 +451,8 @@ function markValid(element) {
  * Email validation using regex
  */
 function isValidEmail(email) {
-  const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  // Simple check: something@something.something
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(String(email).toLowerCase());
 }
 
@@ -472,6 +478,23 @@ function showMessage(form, type, text) {
   // When it finishes, remove the message from the page.
   msgDiv.style.animation = 'fadeout 5s forwards';
   msgDiv.addEventListener('animationend', () => msgDiv.remove());
+}
+
+/**
+ * Any <img data-fallback="path"> swaps to that picture if its own photo is missing.
+ * Example: <img src="images/founder.jpg" data-fallback="images/placeholder.svg" alt="...">
+ */
+function initializeImageFallbacks() {
+  document.querySelectorAll('img[data-fallback]').forEach(img => {
+    const swap = () => {
+      if (!img.dataset.usedFallback) {
+        img.dataset.usedFallback = 'yes';   // only ever swap once, so it can never loop
+        img.src = img.dataset.fallback;
+      }
+    };
+    img.addEventListener('error', swap, { once: true });
+    if (img.complete && img.naturalWidth === 0) swap(); // it had already failed before this code ran
+  });
 }
 
 /**
